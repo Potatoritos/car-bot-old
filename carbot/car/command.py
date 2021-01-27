@@ -16,9 +16,11 @@ class Argument(object):
     def __init__(self, name, converter=None, optional=False):
         self.name = name
         self.optional = optional
+
         if type(converter) in (str, tuple) or converter is None:
             self.converter = None
             self.doc = converter
+
         else:
             self.converter = converter
             self.doc = converter.doc
@@ -36,6 +38,10 @@ class Command(object):
 
         self.doc = inspect.getdoc(func) or "*(No description provided)*"
 
+        if hasattr(func, '_command_checks'):
+            for check in func._command_checks:
+                self.checks.append(check)
+
         conv = Converter(lambda ctx, arg: arg, "test")
 
         if len(func.__code__.co_varnames) > 1 \
@@ -44,6 +50,9 @@ class Command(object):
         else:
             offset = 1
 
+        # Get argument names,
+        # their converters (from annotations),
+        # and whether they are optional (whether they have a default value)
         self.args = [
             Argument(
                 func.__code__.co_varnames[i],
@@ -65,11 +74,9 @@ class Command(object):
 
         self.req_args_length = len([a for a in self.args if not a.optional])
 
-        if hasattr(func, '_command_checks'):
-            for check in func._command_checks:
-                self.checks.append(check)
-
-    def run_checks(self, ctx): # If checks fail, CheckError will be raised
+    def run_checks(self, ctx):
+        # Determine if a context satisfies all command checks
+        # If checks fail, CheckError will be raised
         for command_check in self.checks:
             command_check(ctx)
 
@@ -93,6 +100,7 @@ class Command(object):
                 await ctx.send_error(e.error_msg)
                 return
 
+        # Connect the context args that go past the amount of command args
         args = ctx.args[:max(0, len(self.args)-1)]
 
         if len(ctx.args) >= len(self.args):
@@ -100,6 +108,7 @@ class Command(object):
 
         ctx.args = args
 
+        # Send error message if there are missing arguments
         if len(ctx.args) < self.req_args_length:
             missing = "I am missing the highlighted arguments!\n\n" \
                 + "\n".join([
@@ -112,6 +121,7 @@ class Command(object):
             await ctx.send_error(missing, len(ctx.args), self.req_args_length-1)
             return
 
+        # Convert all arguments with their respective converters
         index = 1
 
         def validate_arg(obj, cmd_arg):
@@ -143,7 +153,7 @@ class Command(object):
         await self.exec(ctx, args, kwargs)
 
     async def exec(self, ctx, args, kwargs):
-        # kwargs = {k : v for k, v in kwargs.items() if k in self.kwargs}
+        # Execute the command func with converted args
         if self.parent is not None:
             await self.func(self.parent, ctx, *args, **kwargs)
         else:
@@ -165,7 +175,7 @@ class CommandList(object):
         return (key in self._commands) or (key in self._aliases)
 
     def __getitem__(self, key):
-        return self._commands.get(key, self._commands.get(self._aliases.get(key)))
+        return self._commands.get(key, self._commands[self._aliases[key]])
 
     def __iter__(self):
         self._iter_idx = -1

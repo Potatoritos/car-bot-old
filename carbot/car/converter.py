@@ -78,18 +78,22 @@ def to_float(lower=None, upper=None):
 
 def to_member(*, fuzzy=True, prompt=True, amount=None):
     def converter(ctx, obj):
+        # Get ID from obj if obj is a mention
         if obj.startswith('<@!') and obj[-1] == '>':
             obj = obj[3:-1]
 
         try:
+            # Get member if obj is an ID
             m = discord.utils.get(ctx.guild.members, id=int(obj))
             if m is not None:
                 return m
+
         except ValueError:
             pass
 
         discrim = None
 
+        # Check if obj specifies a discriminator
         if len(obj) > 5 and obj[-5] == '#':
             try:
                 int(obj[-4:])
@@ -177,6 +181,13 @@ def to_role(fuzzy=True, prompt=True):
         #TODO: implement fuzzy role match
 
         raise ArgumentError("{arg} must be a role!")
+
+def to_message():
+    def converter(ctx, obj):
+        obj = obj.split('/')[-1]
+        #TODO: finish this
+
+    return Converter(converter, "a message")
 
 def to_command():
     def converter(ctx, obj):

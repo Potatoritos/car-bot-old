@@ -77,9 +77,10 @@ class Bot(discord.Client):
             return
 
         command_name = msg.content[len(prefix):].split(' ')[0]
-        command = self.commands[command_name]
 
-        if command is None:
+        try:
+            command = self.commands[command_name]
+        except ValueError:
             return
 
         content = msg.content[len(prefix) + len(command_name) + 1:]
@@ -97,6 +98,7 @@ class Bot(discord.Client):
         self.listeners.add(Listener(func))
 
     def dispatch(self, event, *args, **kwargs):
+        # This function is called by discord.Client whenever an event occurs
         self.listeners.run('on_' + event, *args, **kwargs)
         super().dispatch(event, *args, **kwargs)
 
