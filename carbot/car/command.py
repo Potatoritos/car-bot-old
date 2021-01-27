@@ -1,0 +1,217 @@
+import inspect
+import discord
+from .exception import CheckError, ArgumentError, CommandError
+from .converter import Converter, to_member #, to_channel
+from .command_utils import bracket_arg
+
+
+__all__ = [
+    'Argument',
+    'Command',
+    'CommandList',
+    'command',
+]
+
+class Argument(object):
+    def __init__(self, name, converter=None, optional=False):
+        self.name = name
+        self.optional = optional
+        if type(converter) in (str, tuple) or converter is None:
+            self.converter = None
+            self.doc = converter
+        else:
+            self.converter = converter
+            self.doc = converter.doc
+
+class Command(object):
+    def __init__(self, func, **kwargs):
+        self.func = func
+        self.parent = None
+
+        self.name = kwargs.get('name', func.__name__)
+        self.aliases = kwargs.get('aliases', [])
+        self.category = kwargs.get('category')
+        self.checks = kwargs.get('checks', [])
+        self.aliases = kwargs.get('aliases', [])
+
+        self.doc = inspect.getdoc(func) or "*(No description provided)*"
+
+        conv = Converter(lambda ctx, arg: arg, "test")
+
+        if len(func.__code__.co_varnames) > 1 \
+                and func.__code__.co_varnames[1] == 'ctx':
+            offset = 2
+        else:
+            offset = 1
+
+        self.args = [
+            Argument(
+                func.__code__.co_varnames[i],
+                func.__annotations__.get(func.__code__.co_varnames[i], conv),
+                func.__code__.co_argcount - i <= len(func.__defaults__ or ())
+            )
+            for i in range(offset, func.__code__.co_argcount)
+        ]
+        self.kwargs = {
+            func.__code__.co_varnames[i] : Argument(
+                func.__code__.co_varnames[i],
+                func.__annotations__.get(func.__code__.co_varnames[i], conv),
+                True
+            )
+            for i in range(func.__code__.co_argcount,
+                           func.__code__.co_argcount \
+                           + func.__code__.co_kwonlyargcount)
+        }
+
+        self.req_args_length = len([a for a in self.args if not a.optional])
+
+        if hasattr(func, '_command_checks'):
+            for check in func._command_checks:
+                self.checks.append(check)
+
+    def run_checks(self, ctx): # If checks fail, CheckError will be raised
+        for command_check in self.checks:
+            command_check(ctx)
+
+    async def run(self, ctx, run_checks=True):
+        try:
+            await self._run(ctx, run_checks)
+
+        except ArgumentError as e:
+            await ctx.send_error(e.error_msg, e.index)
+
+        except CommandError as e:
+            await ctx.send_error(e.error_msg)
+
+    async def _run(self, ctx, run_checks=True):
+        ctx.command = self
+
+        if run_checks:
+            try:
+                self.run_checks(ctx)
+            except CheckError as e:
+                await ctx.send_error(e.error_msg)
+                return
+
+        args = ctx.args[:max(0, len(self.args)-1)]
+
+        if len(ctx.args) >= len(self.args):
+            args.append(' '.join(ctx.args[len(self.args)-1:]))
+
+        ctx.args = args
+
+        if len(ctx.args) < self.req_args_length:
+            missing = "I am missing the highlighted arguments!\n\n" \
+                + "\n".join([
+                    f"`{bracket_arg(self.args[i])}`: {self.args[i].doc}"
+                    for i in range(len(ctx.args), len(self.args))
+                ])
+
+            optional = "\n\nOptional parameters"
+
+            await ctx.send_error(missing, len(ctx.args), self.req_args_length-1)
+            return
+
+        index = 1
+
+        def validate_arg(obj, cmd_arg):
+            nonlocal index
+            try:
+                if cmd_arg.converter is None:
+                    return obj
+                return cmd_arg.converter.convert(ctx, obj)
+            except ArgumentError as e:
+                raise ArgumentError(e.error_msg, index)
+
+            index += 1
+
+        args = list(map(validate_arg, ctx.args, self.args))
+
+        def validate_kwarg(key, converter):
+            try:
+                if converter is None:
+                    return ctx.kwargs[key]
+                return converter.convert(ctx, ctx.kwargs[key])
+            except ArgumentError as e:
+                raise ArgumentError(e.error_msg, key)
+
+        kwargs = {
+            k.name : validate_kwarg(ctx.kwargs[k.name], k.converter)
+            for k in self.kwargs if k in ctx.kwargs
+        }
+
+        await self.exec(ctx, args, kwargs)
+
+    async def exec(self, ctx, args, kwargs):
+        # kwargs = {k : v for k, v in kwargs.items() if k in self.kwargs}
+        if self.parent is not None:
+            await self.func(self.parent, ctx, *args, **kwargs)
+        else:
+            await self.func(ctx, *args, **kwargs)
+
+class CommandList(object):
+    def __init__(self):
+        self._commands = {}
+        self._aliases = {}
+
+        self._iter_list = []
+        self._iter_idx = 0
+        self._edited = False
+
+    def __len__(self):
+        return len(self._commands)
+
+    def __contains__(self, key):
+        return (key in self._commands) or (key in self._aliases)
+
+    def __getitem__(self, key):
+        return self._commands.get(key, self._commands.get(self._aliases.get(key)))
+
+    def __iter__(self):
+        self._iter_idx = -1
+
+        if self._edited:
+            self._iter_list = list(self._commands.values())
+            self._iter_list.sort(key=lambda x: x.name)
+            self._edited = False
+
+        return self
+
+    def __next__(self):
+        self._iter_idx += 1
+
+        if self._iter_idx >= len(self._iter_list):
+            raise StopIteration
+
+        return self._iter_list[self._iter_idx]
+
+    def add(self, command):
+        self._commands[command.name] = command
+
+        for alias in command.aliases:
+            self.set_alias(alias, command.name)
+
+        self._edited = True
+
+    def remove(self, command):
+        for alias in command.aliases:
+            del self._aliases[alias]
+
+        del self._commands[command.name]
+
+        self._edited = True
+
+    def get(self, key, default=None):
+        try:
+            return self.__getitem__(key)
+        except KeyError:
+            return default
+
+    def set_alias(self, alias, command_name):
+        self._aliases[alias] = command_name
+
+def command(**kwargs):
+    def decorator(func):
+        return Command(func, **kwargs)
+    return decorator
+
