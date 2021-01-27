@@ -1,5 +1,8 @@
 # car-bot
 
+todo:
+- guild settings
+
 to run:
 
 1. run `python setup_string_stuff.py build`
