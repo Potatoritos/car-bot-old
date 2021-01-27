@@ -80,7 +80,7 @@ class Bot(discord.Client):
 
         try:
             command = self.commands[command_name]
-        except ValueError:
+        except KeyError:
             return
 
         content = msg.content[len(prefix) + len(command_name) + 1:]

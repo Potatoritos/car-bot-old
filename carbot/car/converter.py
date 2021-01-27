@@ -10,6 +10,7 @@ __all__ = [
     'to_member',
     'to_text_channel',
     'to_role',
+    'to_message',
     'to_command'
 ]
 
@@ -43,7 +44,7 @@ def check_is_between(obj, lower, upper):
         raise ArgumentError(f"{arg} must be at least {upper}!")
 
 def to_int(lower=None, upper=None):
-    def converter(ctx, obj):
+    async def converter(ctx, obj):
         try:
             obj = int(obj)
         except ValueError:
@@ -56,7 +57,7 @@ def to_int(lower=None, upper=None):
     return Converter(converter, "an integer")
 
 def to_float(lower=None, upper=None):
-    def converter(ctx, obj):
+    async def converter(ctx, obj):
         spl = obj.split('/')
 
         if len(spl) == 2:
@@ -77,7 +78,7 @@ def to_float(lower=None, upper=None):
     return Converter(converter, "a number")
 
 def to_member(*, fuzzy=True, prompt=True, amount=None):
-    def converter(ctx, obj):
+    async def converter(ctx, obj):
         # Get ID from obj if obj is a mention
         if obj.startswith('<@!') and obj[-1] == '>':
             obj = obj[3:-1]
@@ -151,7 +152,7 @@ def to_member(*, fuzzy=True, prompt=True, amount=None):
     return Converter(converter, "a member")
 
 def to_text_channel(fuzzy=True, prompt=True):
-    def converter(ctx, obj):
+    async def converter(ctx, obj):
         if obj.startswith('<@#') and obj[-1] == '>':
             obj = obj[3:-1]
 
@@ -167,7 +168,7 @@ def to_text_channel(fuzzy=True, prompt=True):
         raise ArgumentError("{arg} must be a text channel!")
 
 def to_role(fuzzy=True, prompt=True):
-    def converter(ctx, obj):
+    async def converter(ctx, obj):
         if obj.startswith('<@&') and obj[-1] == '>':
             obj = obj[3:-1]
 
@@ -183,14 +184,24 @@ def to_role(fuzzy=True, prompt=True):
         raise ArgumentError("{arg} must be a role!")
 
 def to_message():
-    def converter(ctx, obj):
+    async def converter(ctx, obj):
         obj = obj.split('/')[-1]
-        #TODO: finish this
+        try:
+            msg = await ctx.channel.fetch_message(int(obj))
+        except (ValueError, discord.NotFound):
+            raise ArgumentError("I can't find this message!")
+        except discord.Forbidden:
+            raise ArgumentError("I don't have the permissions required to"
+                                "fetch this message!")
+        except discord.HTTPException:
+            raise ArgumentError("Message fetching failed!")
+
+        return msg
 
     return Converter(converter, "a message")
 
 def to_command():
-    def converter(ctx, obj):
+    async def converter(ctx, obj):
         command = ctx.bot.commands.get(obj)
 
         if command is None:

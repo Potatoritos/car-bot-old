@@ -103,7 +103,7 @@ class Command(object):
         # Connect the context args that go past the amount of command args
         args = ctx.args[:max(0, len(self.args)-1)]
 
-        if len(ctx.args) >= len(self.args):
+        if len(ctx.args) >= len(self.args) and len(ctx.args) > 0:
             args.append(' '.join(ctx.args[len(self.args)-1:]))
 
         ctx.args = args
@@ -122,35 +122,35 @@ class Command(object):
             return
 
         # Convert all arguments with their respective converters
-        index = 1
+        conv_args = []
+        conv_kwargs = {}
 
-        def validate_arg(obj, cmd_arg):
-            nonlocal index
+        for i in range(len(ctx.args)):
             try:
-                if cmd_arg.converter is None:
-                    return obj
-                return cmd_arg.converter.convert(ctx, obj)
+                if self.args[i].converter is None:
+                    conv_args.append(args[i])
+                else:
+                    c = await self.args[i].converter.convert(ctx, args[i])
+                    conv_args.append(c)
+
             except ArgumentError as e:
-                raise ArgumentError(e.error_msg, index)
+                raise ArgumentError(e.error_msg, index+1)
 
-            index += 1
+        for _, kwarg in self.kwargs.items():
+            if kwarg.name not in ctx.kwargs:
+                continue
 
-        args = list(map(validate_arg, ctx.args, self.args))
-
-        def validate_kwarg(key, converter):
             try:
-                if converter is None:
-                    return ctx.kwargs[key]
-                return converter.convert(ctx, ctx.kwargs[key])
+                if kwarg.converter is None:
+                    conv_kwargs[kwarg.name] = ctx.kwargs[kwarg.name]
+                else:
+                    c = await kwarg.converter.convert(ctx, ctx.kwargs[kwarg.name])
+                    conv_kwargs[kwarg.name] = c
+
             except ArgumentError as e:
-                raise ArgumentError(e.error_msg, key)
+                raise ArgumentError(e.error_msg, kwarg.name)
 
-        kwargs = {
-            k.name : validate_kwarg(ctx.kwargs[k.name], k.converter)
-            for k in self.kwargs if k in ctx.kwargs
-        }
-
-        await self.exec(ctx, args, kwargs)
+        await self.exec(ctx, conv_args, conv_kwargs)
 
     async def exec(self, ctx, args, kwargs):
         # Execute the command func with converted args
@@ -175,7 +175,10 @@ class CommandList(object):
         return (key in self._commands) or (key in self._aliases)
 
     def __getitem__(self, key):
-        return self._commands.get(key, self._commands[self._aliases[key]])
+        if key in self._commands:
+            return self._commands[key]
+
+        return self._commands[self._aliases[key]]
 
     def __iter__(self):
         self._iter_idx = -1
