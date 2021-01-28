@@ -44,6 +44,7 @@ class Command(object):
 
         conv = Converter(lambda ctx, arg: arg, "test")
 
+        # Account for 'self' argument
         if len(func.__code__.co_varnames) > 1 \
                 and func.__code__.co_varnames[1] == 'ctx':
             offset = 2
@@ -134,7 +135,7 @@ class Command(object):
                     conv_args.append(c)
 
             except ArgumentError as e:
-                raise ArgumentError(e.error_msg, index+1)
+                raise ArgumentError(e.error_msg, i)
 
         for _, kwarg in self.kwargs.items():
             if kwarg.name not in ctx.kwargs:

@@ -48,7 +48,7 @@ def to_int(lower=None, upper=None):
         try:
             obj = int(obj)
         except ValueError:
-            raise ArgumentError("{arg} must be an integer!")
+            raise ArgumentError("This parameter must be an integer!")
 
         check_is_between(obj, lower, upper)
 
@@ -69,7 +69,7 @@ def to_float(lower=None, upper=None):
         try:
             obj = float(obj)
         except ValueError:
-            raise ArgumentError("{arg} must be a number!")
+            raise ArgumentError("This parameter must be a number!")
 
         check_is_between(obj, lower, upper)
 
@@ -146,8 +146,7 @@ def to_member(*, fuzzy=True, prompt=True, amount=None):
         if m is not None:
             return m
 
-        raise ArgumentError("{arg} must be a member! (in the format @mention, ID"
-                         ", name#discriminator, or name)")
+        raise ArgumentError("I can't find this member!")
 
     return Converter(converter, "a member")
 
@@ -165,7 +164,7 @@ def to_text_channel(fuzzy=True, prompt=True):
 
         #TODO: implement fuzzy match
 
-        raise ArgumentError("{arg} must be a text channel!")
+        raise ArgumentError("I can't find this text channel!")
 
 def to_role(fuzzy=True, prompt=True):
     async def converter(ctx, obj):
@@ -181,7 +180,7 @@ def to_role(fuzzy=True, prompt=True):
 
         #TODO: implement fuzzy role match
 
-        raise ArgumentError("{arg} must be a role!")
+        raise ArgumentError("I can't find this role!")
 
 def to_message():
     async def converter(ctx, obj):
@@ -205,7 +204,7 @@ def to_command():
         command = ctx.bot.commands.get(obj)
 
         if command is None:
-            raise ArgumentError("{arg} is not a command!")
+            raise ArgumentError("I can't find this command!")
 
         return command
 

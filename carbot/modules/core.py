@@ -9,14 +9,10 @@ class Core(car.Cog):
 
     @car.listener
     async def on_message(self, msg):
-        # if msg.author.id != 153240776216805376:
-            # return
         await self.bot.process_message(msg)
 
     @car.listener
     async def on_message_edit(self, before, after):
-        # if before.author.id != 153240776216805376:
-            # return
         await self.bot.process_message(after)
 
     @car.listener

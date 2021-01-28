@@ -2,9 +2,11 @@ import discord
 import inspect
 import asyncio
 import importlib
+import sqlite3
 from .cog import Cog
 from .command import Command, CommandList
 from .listener import Listener, ListenerList
+from .guild_settings import GuildSettingsList
 from .exception import ArgumentError
 from .context import Context
 
@@ -19,10 +21,13 @@ class Bot(discord.Client):
         intents.members = True
         super().__init__(intents=intents)
 
+        self.conn = sqlite3.connect('car.db')
+
         self.commands = CommandList()
         self.listeners = ListenerList()
-        self.cogs = {}
+        self.guild_settings = GuildSettingsList(self.conn)
 
+        self.cogs = {}
         self.modules = {}
 
     def add_cog(self, cog):
@@ -72,7 +77,8 @@ class Bot(discord.Client):
         if msg.author.bot:
             return
 
-        prefix = 'c.' # TODO: retrieve prefix from guild settings
+        prefix = self.guild_settings[msg.guild.id].prefix
+
         if not msg.content.startswith(prefix):
             return
 

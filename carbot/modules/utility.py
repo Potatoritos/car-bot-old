@@ -37,5 +37,5 @@ class Utility(car.Cog):
         Displays the contents of a text file.
         The contents will be formatted in a code block if the name of the file is not message.txt.
         """
-        pass
+        print(message.content)
 
