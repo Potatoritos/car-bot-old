@@ -1,7 +1,6 @@
 # car-bot
 
-todo:
-- guild settings
+wip
 
 to run:
 

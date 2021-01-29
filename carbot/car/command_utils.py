@@ -17,9 +17,6 @@ def command_outline(cmd, ctx, index=-1, index_to=None, use_args=True):
     else:
         args = []
 
-    print(index)
-    print(cmd.args)
-
     def format_arg(arg_name, idx):
         if idx != index and idx != index_to:
             if arg_name.startswith('<@!') and arg_name.endswith('>'):
