@@ -8,7 +8,7 @@ _all__ = [
     'bracket_arg'
 ]
 
-def command_outline(cmd, ctx, index=-1, index_to=None, use_args=True):
+async def command_outline(cmd, ctx, index=-1, index_to=None, use_args=True):
     if index_to is None:
         index_to = index
 
@@ -17,17 +17,17 @@ def command_outline(cmd, ctx, index=-1, index_to=None, use_args=True):
     else:
         args = []
 
-    def format_arg(arg_name, idx):
+    async def format_arg(arg_name, idx):
         if idx != index and idx != index_to:
             if arg_name.startswith('<@!') and arg_name.endswith('>'):
                 try:
-                    m = to_member(fuzzy=False).convert(ctx, arg_name)
+                    m = await to_member(fuzzy=False).convert(ctx, arg_name)
                     arg_name = f"@{m.nick or m.name}"
                 except ArgumentError:
                     pass
 
             if idx-1 == index_to:
-                return arg_name
+                return " " + arg_name
 
             return " " + arg_name
 
@@ -36,24 +36,24 @@ def command_outline(cmd, ctx, index=-1, index_to=None, use_args=True):
         if idx == index_to:
             arg_name = arg_name + "``__**``"
 
-        return arg_name
+        return " " + arg_name
 
     outline = f"``{ctx.prefix}{cmd.name}"
     for i in range(len(args)):
         if i > len(cmd.args):
             break
 
-        outline += format_arg(args[i], i)
+        outline += await format_arg(args[i], i)
 
     for i in range(len(args), len(cmd.args)):
-        outline += " " + format_arg(bracket_arg(cmd.args[i]), i)
+        outline += await format_arg(bracket_arg(cmd.args[i]), i)
 
     if outline[-1] == '`':
         return outline[0:-2]
     else:
         return outline + "``"
 
-def command_help(cmd, ctx):
+async def command_help(cmd, ctx):
     e = embed(
         title=f"Command ─ {cmd.name}",
         description=cmd.doc
@@ -61,9 +61,9 @@ def command_help(cmd, ctx):
 
     e.add_field(
         name="Usage",
-        value=command_outline(cmd, ctx, use_args=False) + "\n\n" + "\n".join(
-            f"`{bracket_arg(arg)}`: {arg.doc}" for arg in cmd.args
-        ),
+        value=await command_outline(cmd, ctx, use_args=False) + "\n\n"
+            + "\n".join(f"`{bracket_arg(arg)}`: {arg.doc}"
+                        for arg in cmd.args),
         inline=False
     )
 

@@ -35,7 +35,7 @@ class Context(object):
             return await self.channel.send(embed=e)
 
         else:
-            outline = command_outline(self.command, self, index, index_to)
+            outline = await command_outline(self.command, self, index, index_to)
             e = embed(description=f":x: {outline}\n\n{msg}")
 
             if footer is not None:

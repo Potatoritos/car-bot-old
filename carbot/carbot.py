@@ -8,6 +8,7 @@ for module in (
     'modules.core',
     'modules.bot_admin',
     'modules.bot_info',
+    'modules.guilds',
     'modules.test_module',
     'modules.utility'
 ):

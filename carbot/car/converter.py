@@ -150,10 +150,10 @@ def to_member(*, fuzzy=True, prompt=True, amount=None):
 
     return Converter(converter, "a member")
 
-def to_text_channel(fuzzy=True, prompt=True):
+def to_text_channel(fuzzy=True, prompt=True, amount=None):
     async def converter(ctx, obj):
-        if obj.startswith('<@#') and obj[-1] == '>':
-            obj = obj[3:-1]
+        if obj.startswith('<#') and obj[-1] == '>':
+            obj = obj[2:-1]
 
         try:
             c = discord.utils.get(ctx.guild.text_channels, id=int(obj))
@@ -162,11 +162,39 @@ def to_text_channel(fuzzy=True, prompt=True):
         except ValueError:
             pass
 
-        #TODO: implement fuzzy match
+        if fuzzy:
+            if isinstance(amount, int):
+                matches = fuzzy_match(
+                    obj,
+                    ctx.guild.text_channels,
+                    amount,
+                    lambda m: m.name.lower()
+                )
+                return matches
+
+            if prompt:
+                matches = fuzzy_match(
+                    obj,
+                    ctx.guild.text_channels,
+                    5,
+                    lambda m: m.name.lower()
+                )
+                # prompt = False # TODO: implement name disambiguation
+                return matches[0][0]
+            else:
+                matches = fuzzy_match(
+                    obj,
+                    ctx.guild.text_channels,
+                    5,
+                    lambda m: m.name.lower()
+                )
+                return matches[0][0]
 
         raise ArgumentError("I can't find this text channel!")
 
-def to_role(fuzzy=True, prompt=True):
+    return Converter(converter, "a text channel")
+
+def to_role(fuzzy=True, prompt=True, amount=None):
     async def converter(ctx, obj):
         if obj.startswith('<@&') and obj[-1] == '>':
             obj = obj[3:-1]
@@ -178,9 +206,37 @@ def to_role(fuzzy=True, prompt=True):
         except ValueError:
             pass
 
-        #TODO: implement fuzzy role match
+        if fuzzy:
+            if isinstance(amount, int):
+                matches = fuzzy_match(
+                    obj,
+                    ctx.guild.roles,
+                    amount,
+                    lambda m: m.name.lower()
+                )
+                return matches
+
+            if prompt:
+                matches = fuzzy_match(
+                    obj,
+                    ctx.guild.roles,
+                    5,
+                    lambda m: m.name.lower()
+                )
+                # prompt = False # TODO: implement name disambiguation
+                return matches[0][0]
+            else:
+                matches = fuzzy_match(
+                    obj,
+                    ctx.guild.roles,
+                    5,
+                    lambda m: m.name.lower()
+                )
+                return matches[0][0]
 
         raise ArgumentError("I can't find this role!")
+
+    return Converter(converter, "a role")
 
 def to_message():
     async def converter(ctx, obj):

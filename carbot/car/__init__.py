@@ -6,5 +6,6 @@ from .command_utils import *
 from .context import *
 from .converter import *
 from .exception import *
+from .guild_settings import *
 from .listener import *
 from .utils import *

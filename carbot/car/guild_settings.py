@@ -1,32 +1,49 @@
 __all__ = [
-    'SettingsMananger',
-    'GuildSettings'
+    'GuildSettings',
+    'GuildSettingsList',
+    'GUILD_SETTINGS'
 ]
 
-VALUES = (
+GUILD_SETTINGS = (
     'prefix',
     'msg_join',
     'msg_leave',
+    'channel_joinleave',
     'role_banned',
     'role_muted',
     'role_unverified'
 )
 
+DEFAULT_SETTINGS = {
+    'prefix': "c.",
+    'msg_join': "",
+    'msg_leave': "",
+    'channel_joinleave': -1,
+    'role_banned': -1,
+    'role_muted': -1,
+    'role_unverified': -1
+}
+
 class GuildSettings(object):
     def __init__(self, conn, guild_id):
         object.__setattr__(self, '_cache', {})
         object.__setattr__(self, '_conn', conn)
-        object.__setattr__(self, 'id', conn)
+        object.__setattr__(self, 'id', guild_id)
 
         cur = self._conn.cursor()
-        cur.execute('INSERT OR IGNORE INTO guilds values(?, "c.", "", "", -1, -1, -1)', (guild_id,))
+        cur.execute(
+            'INSERT OR IGNORE INTO guilds values(?, '
+            + ', '.join([str(v), f'"{v}"'][isinstance(v, str)]
+                        for _, v in DEFAULT_SETTINGS.items())
+            + ')', (guild_id,)
+        )
         self._conn.commit()
 
         cur.execute('SELECT * FROM guilds WHERE id=?', (guild_id,))
         fetch = cur.fetchone()
 
         for i in range(1, len(fetch)):
-            self._cache[VALUES[i-1]] = fetch[i]
+            self._cache[GUILD_SETTINGS[i-1]] = fetch[i]
 
     def __getattr__(self, key):
         if key in self._cache:
@@ -35,15 +52,23 @@ class GuildSettings(object):
         raise AttributeError
 
     def __setattr__(self, key, value):
-        if key in self._cache:
-            cur = self._conn.cursor()
-            cur.execute(f'UPDATE guilds SET {key}=? WHERE id=?', (value, self.id))
-            self._conn.commit()
-
-            self._cache[key] = value
-
-        else:
+        if key not in self._cache:
             raise AttributeError
+
+        if value is None:
+            value = DEFAULT_SETTINGS[key]
+
+        cur = self._conn.cursor()
+        cur.execute(f'UPDATE guilds SET {key}=? WHERE id=?', (value, self.id))
+        self._conn.commit()
+
+        self._cache[key] = value
+
+    def __getitem__(self, key):
+        return self.__getattr__(key)
+
+    def __setitem__(self, key, value):
+        self.__setattr__(key, value)
 
 class GuildSettingsList(object):
     def __init__(self, conn):
@@ -57,6 +82,7 @@ class GuildSettingsList(object):
                     prefix TEXT,
                     msg_join TEXT,
                     msg_leave TEXT,
+                    channel_joinleave INTEGER,
                     role_banned INTEGER,
                     role_muted INTEGER,
                     role_unverified INTEGER)

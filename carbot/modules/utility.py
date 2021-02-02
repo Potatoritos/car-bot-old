@@ -10,15 +10,18 @@ class Utility(car.Cog):
         """
         Displays someone's profile picture
         """
-        link = ""
         if member.is_avatar_animated():
-            link += f"[[.gif]]({member.avatar_url} \"Link to .gif\") "
+            link = f"[[.gif]]({member.avatar_url} \"Link to .gif\") "
+        else:
+            link = ""
 
         as_webp = member.avatar_url_as(format='webp')
         as_png = member.avatar_url_as(format='png')
 
-        link += f"[[.webp]]({as_webp} \"Link to .webp\") "
-        link += f"[[.png]]({as_png} \"Link to .png\") "
+        link += (
+            f"[[.webp]]({as_webp} \"Link to .webp\") "
+            f"[[.png]]({as_png} \"Link to .png\") "
+        )
 
         e = car.embed(description=f"{member.mention}'s avatar\n{link}")
         e.set_image(url=member.avatar_url)
@@ -37,5 +40,5 @@ class Utility(car.Cog):
         Displays the contents of a text file.
         The contents will be formatted in a code block if the name of the file is not message.txt.
         """
-        print(message.content)
+        pass
 
