@@ -16,21 +16,12 @@ __all__ = [
 
 class Converter(object):
     def __init__(self, func, doc=None):
-        self.funcs = [func]
+        self.convert = func
         self.doc = doc
-
-    def __or__(self, other): # Pipe
-        self.funcs.append(other.func)
-        return self
 
     def __floordiv__(self, doc):
         self.doc = doc
         return self
-
-    def convert(self, ctx, obj):
-        for func in self.funcs:
-            obj = func(ctx, obj)
-        return obj
 
 def check_is_between(obj, lower, upper):
     if lower is not None and upper is not None:
@@ -44,7 +35,7 @@ def check_is_between(obj, lower, upper):
         raise ArgumentError(f"{arg} must be at least {upper}!")
 
 def to_int(lower=None, upper=None):
-    async def converter(ctx, obj):
+    def converter(ctx, obj):
         try:
             obj = int(obj)
         except ValueError:
@@ -57,7 +48,7 @@ def to_int(lower=None, upper=None):
     return Converter(converter, "an integer")
 
 def to_float(lower=None, upper=None):
-    async def converter(ctx, obj):
+    def converter(ctx, obj):
         spl = obj.split('/')
 
         if len(spl) == 2:
@@ -77,8 +68,17 @@ def to_float(lower=None, upper=None):
 
     return Converter(converter, "a number")
 
+def match_by_args(to_match, against, *, amount, prompt, key):
+    if isinstance(amount, int):
+        return fuzzy_match(to_match, against, amount, key)
+    if prompt:
+        return fuzzy_match(to_match, against, 5, key)[0][0]
+        # TODO: implement name disambiguation
+    else:
+        return fuzzy_match(to_match, against, 5, key)[0][0]
+
 def to_member(*, fuzzy=True, prompt=True, amount=None):
-    async def converter(ctx, obj):
+    def converter(ctx, obj):
         # Get ID from obj if obj is a mention
         if obj.startswith('<@!') and obj[-1] == '>':
             obj = obj[3:-1]
@@ -110,32 +110,8 @@ def to_member(*, fuzzy=True, prompt=True, amount=None):
                     m for m in ctx.guild.members if m.discriminator == discrim
                 ]
 
-            if isinstance(amount, int):
-                matches = fuzzy_match(
-                    obj,
-                    ctx.guild.members,
-                    amount,
-                    lambda m: m.name.lower()
-                )
-                return matches
-
-            if prompt:
-                matches = fuzzy_match(
-                    obj,
-                    ctx.guild.members,
-                    5,
-                    lambda m: m.name.lower()
-                )
-                # prompt = False # TODO: implement name disambiguation
-                return matches[0][0]
-            else:
-                matches = fuzzy_match(
-                    obj,
-                    ctx.guild.members,
-                    5,
-                    lambda m: m.name.lower()
-                )
-                return matches[0][0]
+            return match_by_args(obj, members, amount=amount,
+                                 prompt=prompt, key=lambda m: m.name.lower())
 
         kwargs = {'name':obj}
         if discrim is not None:
@@ -151,7 +127,7 @@ def to_member(*, fuzzy=True, prompt=True, amount=None):
     return Converter(converter, "a member")
 
 def to_text_channel(fuzzy=True, prompt=True, amount=None):
-    async def converter(ctx, obj):
+    def converter(ctx, obj):
         if obj.startswith('<#') and obj[-1] == '>':
             obj = obj[2:-1]
 
@@ -163,39 +139,15 @@ def to_text_channel(fuzzy=True, prompt=True, amount=None):
             pass
 
         if fuzzy:
-            if isinstance(amount, int):
-                matches = fuzzy_match(
-                    obj,
-                    ctx.guild.text_channels,
-                    amount,
-                    lambda m: m.name.lower()
-                )
-                return matches
-
-            if prompt:
-                matches = fuzzy_match(
-                    obj,
-                    ctx.guild.text_channels,
-                    5,
-                    lambda m: m.name.lower()
-                )
-                # prompt = False # TODO: implement name disambiguation
-                return matches[0][0]
-            else:
-                matches = fuzzy_match(
-                    obj,
-                    ctx.guild.text_channels,
-                    5,
-                    lambda m: m.name.lower()
-                )
-                return matches[0][0]
+            return match_by_args(obj, ctx.guild.text_channels, amount=amount,
+                                 prompt=prompt, key=lambda x: x.name.lower())
 
         raise ArgumentError("I can't find this text channel!")
 
     return Converter(converter, "a text channel")
 
 def to_role(fuzzy=True, prompt=True, amount=None):
-    async def converter(ctx, obj):
+    def converter(ctx, obj):
         if obj.startswith('<@&') and obj[-1] == '>':
             obj = obj[3:-1]
 
@@ -207,32 +159,8 @@ def to_role(fuzzy=True, prompt=True, amount=None):
             pass
 
         if fuzzy:
-            if isinstance(amount, int):
-                matches = fuzzy_match(
-                    obj,
-                    ctx.guild.roles,
-                    amount,
-                    lambda m: m.name.lower()
-                )
-                return matches
-
-            if prompt:
-                matches = fuzzy_match(
-                    obj,
-                    ctx.guild.roles,
-                    5,
-                    lambda m: m.name.lower()
-                )
-                # prompt = False # TODO: implement name disambiguation
-                return matches[0][0]
-            else:
-                matches = fuzzy_match(
-                    obj,
-                    ctx.guild.roles,
-                    5,
-                    lambda m: m.name.lower()
-                )
-                return matches[0][0]
+            return match_by_args(obj, ctx.guild.roles, amount=amount,
+                                 prompt=prompt, key=lambda m: m.name.lower())
 
         raise ArgumentError("I can't find this role!")
 
@@ -256,7 +184,7 @@ def to_message():
     return Converter(converter, "a message")
 
 def to_command():
-    async def converter(ctx, obj):
+    def converter(ctx, obj):
         command = ctx.bot.commands.get(obj)
 
         if command is None:
@@ -265,5 +193,4 @@ def to_command():
         return command
 
     return Converter(converter, "a command")
-
 

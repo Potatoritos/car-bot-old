@@ -89,7 +89,7 @@ class Bot(discord.Client):
         except KeyError:
             return
 
-        content = msg.content[len(prefix) + len(command_name) + 1:]
+        content = msg.content[len(prefix)+len(command_name)+1:]
 
         ctx = Context(msg, prefix, content, self)
 

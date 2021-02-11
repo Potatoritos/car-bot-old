@@ -2,7 +2,7 @@ import inspect
 import discord
 from .exception import CheckError, ArgumentError, CommandError
 from .converter import Converter, to_member #, to_channel
-from .command_utils import bracket_arg
+from .command_utils import command_usage
 
 
 __all__ = [
@@ -111,13 +111,11 @@ class Command(object):
 
         # Send error message if there are missing arguments
         if len(ctx.args) < self.req_args_length:
-            missing = "I am missing the highlighted arguments!\n\n" \
-                + "\n".join([
-                    f"`{bracket_arg(self.args[i])}`: {self.args[i].doc}"
-                    for i in range(len(ctx.args), len(self.args))
-                ])
-
-            optional = "\n\nOptional parameters"
+            usage = command_usage(self, ctx)
+            missing = (
+                "I am missing these arguments!\n\n"
+                f"Correct usage:\n{usage}"
+            )
 
             await ctx.send_error(missing, len(ctx.args), self.req_args_length-1)
             return
@@ -128,11 +126,14 @@ class Command(object):
 
         for i in range(len(ctx.args)):
             try:
-                if self.args[i].converter is None:
+                conv = self.args[i].converter
+                if conv is None:
                     conv_args.append(args[i])
-                else:
-                    c = await self.args[i].converter.convert(ctx, args[i])
+                elif inspect.iscoroutinefunction(conv.convert):
+                    c = await conv.convert(ctx, args[i])
                     conv_args.append(c)
+                else:
+                    conv_args.append(conv.convert(ctx, args[i]))
 
             except ArgumentError as e:
                 raise ArgumentError(e.error_msg, i)
@@ -144,9 +145,14 @@ class Command(object):
             try:
                 if kwarg.converter is None:
                     conv_kwargs[kwarg.name] = ctx.kwargs[kwarg.name]
+
+                elif inspect.iscoroutinefunction(kwarg.converter.convert):
+                    conv_kwargs[kwarg.name] = await kwarg.converter.convert(
+                        ctx, ctx.kwargs[kwarg.name]
+                    )
                 else:
-                    c = await kwarg.converter.convert(ctx, ctx.kwargs[kwarg.name])
-                    conv_kwargs[kwarg.name] = c
+                    conv_kwargs[kwarg.name] = \
+                        kwarg.converter.convert(ctx, ctx.kwargs[kwarg.name])
 
             except ArgumentError as e:
                 raise ArgumentError(e.error_msg, kwarg.name)

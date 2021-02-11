@@ -10,7 +10,8 @@ for module in (
     'modules.bot_info',
     'modules.guilds',
     'modules.test_module',
-    'modules.utility'
+    'modules.utility',
+    'modules.moderation'
 ):
     bot.load_module(module)
 

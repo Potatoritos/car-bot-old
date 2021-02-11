@@ -4,56 +4,94 @@ from .utils import embed
 
 _all__ = [
     'command_outline',
-    'command_help',
-    'bracket_arg'
+    'command_usage',
+    'command_help'
 ]
 
-async def command_outline(cmd, ctx, index=-1, index_to=None, use_args=True):
-    if index_to is None:
-        index_to = index
+def command_outline(cmd, ctx=None, highlight_begin=None,
+                        highlight_end=None, prefix=None):
+    if prefix is None:
+        prefix = ctx.prefix
 
-    if use_args:
-        args = ctx.args
-    else:
+    if ctx is None:
         args = []
+        kwargs = {}
+    else:
+        args = ctx.args
+        kwargs = ctx.kwargs
 
-    async def format_arg(arg_name, idx):
-        if idx != index and idx != index_to:
-            if arg_name.startswith('<@!') and arg_name.endswith('>'):
-                try:
-                    m = await to_member(fuzzy=False).convert(ctx, arg_name)
-                    arg_name = f"@{m.nick or m.name}"
-                except ArgumentError:
-                    pass
+    if highlight_end is None:
+        highlight_end = highlight_begin
 
-            if idx-1 == index_to:
-                return " " + arg_name
+    def format_arg_value(arg_value):
+        if arg_value.startswith('<@!') and arg_value.endswith('>'):
+            try:
+                m = to_member(fuzzy=False).convert(ctx, arg_name)
+                arg_name = f"@{m.nick or m.name}"
+            except ArgumentError:
+                pass
 
-            return " " + arg_name
+        return arg_value
 
-        if idx == index:
-            arg_name = "``**__``" + arg_name
-        if idx == index_to:
-            arg_name = arg_name + "``__**``"
+    def highlight_arg(arg_value, idx):
+        if idx == highlight_begin:
+            arg_value = f"``**__``{arg_value}"
+        if idx == highlight_end:
+            arg_value = f"{arg_value}``__**``"
 
-        return " " + arg_name
+        return arg_value
 
-    outline = f"``{ctx.prefix}{cmd.name}"
+    def format_arg(val, idx, bracket=True, kwarg_name=None):
+        if isinstance(idx, str):
+            val = f"{('--' if len(idx) > 1 else '-')}{idx} {val}"
+            arg = cmd.kwargs[idx]
+        else:
+            arg = cmd.args[idx]
+
+        if bracket:
+            val = bracket_arg(arg, val)
+
+        return " " + highlight_arg(format_arg_value(val), idx)
+
+    outline = f"``{prefix}{cmd.name}"
     for i in range(len(args)):
         if i > len(cmd.args):
             break
 
-        outline += await format_arg(args[i], i)
+        outline += format_arg(args[i], i, bracket=False)
 
     for i in range(len(args), len(cmd.args)):
-        outline += await format_arg(bracket_arg(cmd.args[i]), i)
+        outline += format_arg(cmd.args[i].name, i)
+
+    for _, kwarg in cmd.kwargs.items():
+        if kwarg.name in kwargs:
+            outline += format_arg(kwargs[kwarg.name],
+                                    kwarg.name, bracket=False)
+        else:
+            outline += format_arg(kwarg.doc[0], kwarg.name)
 
     if outline[-1] == '`':
         return outline[0:-2]
     else:
         return outline + "``"
 
-async def command_help(cmd, ctx):
+def command_usage(cmd, ctx):
+    s = ""
+
+    for _, kw in cmd.kwargs.items():
+        prefix = "--" if len(kw.name) > 1 else "-"
+
+        if isinstance(kw.doc, tuple):
+            s += f"\n`({prefix}{kw.name} ({kw.doc[0]}))`: {kw.doc[1]}"
+        else:
+            s += f"\n`({prefix}{kw.name})`: {kw.doc}"
+
+    return command_outline(cmd, prefix=ctx.prefix) + "\n\n" + (
+            "\n".join(f"`{bracket_arg(arg, arg.name)}`: {arg.doc}"
+                      for arg in cmd.args)
+        ) + "\n" + s
+
+def command_help(cmd, ctx):
     e = embed(
         title=f"Command ─ {cmd.name}",
         description=cmd.doc
@@ -61,27 +99,9 @@ async def command_help(cmd, ctx):
 
     e.add_field(
         name="Usage",
-        value=await command_outline(cmd, ctx, use_args=False) + "\n\n"
-            + "\n".join(f"`{bracket_arg(arg)}`: {arg.doc}"
-                        for arg in cmd.args),
+        value=command_usage(cmd, ctx),
         inline=False
     )
-
-    if len(cmd.kwargs) > 0:
-        s = ""
-
-        for _, kw in cmd.kwargs.items():
-            if len(kw.name) > 1:
-                prefix = "--"
-            else:
-                prefix = "-"
-
-            if isinstance(kw.doc, tuple):
-                s += f"\n`{prefix}{kw.name} <{kw.doc[0]}>`: {kw.doc[1]}"
-            else:
-                s += f"\n`{prefix}{kw.name}`: {kw.doc}"
-
-        e.add_field(name="Optional Parameters", value=s, inline=False)
 
     if len(cmd.aliases) > 0:
         e.add_field(
@@ -92,8 +112,6 @@ async def command_help(cmd, ctx):
 
     return e
 
-def bracket_arg(arg):
-    if arg.optional:
-        return f"({arg.name})"
-    else:
-        return f"[{arg.name}]"
+def bracket_arg(arg, val):
+    brackets = "()" if arg.optional else "[]"
+    return f"{brackets[0]}{val}{brackets[1]}"

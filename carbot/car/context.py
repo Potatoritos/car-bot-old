@@ -1,6 +1,6 @@
 from .command_utils import command_outline
 from .parse_args import parse_args
-from .utils import embed
+from .utils import embed, zwsp
 
 
 __all__ = [
@@ -24,18 +24,18 @@ class Context(object):
 
     async def send(self, text=None, filter_pings=True, *args, **kwargs):
         if filter_pings and text is not None:
-            text = str(text).replace('@', '@​')
+            text = zwsp(str(text), '@')
 
         return await self.channel.send(text, *args, **kwargs)
 
-    async def send_error(self, msg, index=None, index_to=None, footer=None):
-        if index is None:
+    async def send_error(self, msg, highlight_begin=None,
+                            highlight_end=None, footer=None):
+        if highlight_begin is None:
             e = embed(description=f":x: {msg}")
-
             return await self.channel.send(embed=e)
-
         else:
-            outline = await command_outline(self.command, self, index, index_to)
+            outline = command_outline(self.command, self,
+                                        highlight_begin, highlight_end)
             e = embed(description=f":x: {outline}\n\n{msg}")
 
             if footer is not None:

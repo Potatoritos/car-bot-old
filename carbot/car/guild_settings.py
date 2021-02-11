@@ -95,3 +95,4 @@ class GuildSettingsList(object):
         self._guilds[guild_id] = GuildSettings(self._conn, guild_id)
 
         return self._guilds[guild_id]
+

@@ -1,6 +1,6 @@
 import discord
 import car
-
+import random
 
 class TestModule(car.Cog):
     def __init__(self, bot):
@@ -13,6 +13,11 @@ class TestModule(car.Cog):
         embed = discord.Embed(description=doc)
 
         await ctx.send(embed=embed)
+
+    @car.command()
+    async def test_message_conv(self, ctx, msg: car.to_message()):
+        print(msg)
+        print(msg.content)
 
     @car.command(aliases=['test4'])
     async def test2(

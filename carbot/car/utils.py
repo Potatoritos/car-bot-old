@@ -7,7 +7,8 @@ __all__ = [
     'edit_dist',
     'join_and',
     'embed',
-    'time_to_seconds'
+    'time_to_seconds',
+    'zwsp'
 ]
 
 def fuzzy_match(query, against, amount=1, key=None):
@@ -37,3 +38,10 @@ def embed(*args, **kwargs):
 
 def time_to_seconds(t):
     return (t.hour * 60 + t.minute) * 60 + t.second + t.microsecond/1000000
+
+def zwsp(text, chars):
+    ZWSP = '​'
+    for char in chars:
+        text = text.replace(char, ZWSP+char+ZWSP)
+
+    return text

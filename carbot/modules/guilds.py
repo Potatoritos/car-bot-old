@@ -14,12 +14,42 @@ class Guilds(car.Cog):
         )
 
     @car.listener
-    async def on_member_join(self, m):
-        pass
+    async def on_member_join(self, member):
+        role = self.bot.guild_settings[member.guild.id].role_unverified
+        role = discord.utils.get(member.guild.text_channels, id=role)
+
+        if role is not None:
+            await member.add_roles(role, reason="Newcomer role") # doesn't work
+
+        greeting = self.bot.guild_settings[member.guild.id].msg_join
+        channel = self.bot.guild_settings[member.guild.id].channel_joinleave
+        channel = discord.utils.get(member.guild.text_channels, id=channel)
+
+        if greeting == '' or channel is None:
+            return
+
+        await channel.send(greeting.format(
+            mention=member.mention,
+            username=member.name,
+            discriminator=member.discriminator,
+            id=member.id
+        ))
 
     @car.listener
-    async def on_member_leave(self, m):
-        pass
+    async def on_member_remove(self, member):
+        farewell = self.bot.guild_settings[member.guild.id].msg_leave
+        channel = self.bot.guild_settings[member.guild.id].channel_joinleave
+        channel = discord.utils.get(member.guild.text_channels, id=channel)
+
+        if farewell == '' or channel is None:
+            return
+
+        await channel.send(farewell.format(
+            mention=member.mention,
+            username=member.name,
+            discriminator=member.discriminator,
+            id=member.id
+        ))
 
     @car.command(aliases=["config", "cfg", "set"])
     async def settings(
@@ -40,6 +70,9 @@ class Guilds(car.Cog):
         The following keywords in these messages will be replaced:
         `{mention}`, `{username}`, `{discriminator}`, `{id}`
         By default, there is no join/leave message.
+
+        Channels:
+        `channel_joinleave`: Sets the join/leave announcement channel
 
         Roles:
         `role_banned`: Sets the banned role
@@ -85,7 +118,7 @@ class Guilds(car.Cog):
 
         elif setting.startswith('role_'):
             try:
-                role = await car.to_role().convert(ctx, value)
+                role = car.to_role().convert(ctx, value)
 
             except car.ArgumentError as e:
                 raise car.ArgumentError(e.error_msg, 1)
@@ -98,7 +131,7 @@ class Guilds(car.Cog):
 
         elif setting.startswith('channel_'):
             try:
-                channel = await car.to_text_channel().convert(ctx, value)
+                channel = car.to_text_channel().convert(ctx, value)
 
             except car.ArgumentError as e:
                 raise car.ArgumentError(e.error_msg, 1)

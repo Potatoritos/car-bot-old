@@ -16,7 +16,7 @@ class BotInfo(car.Cog):
         Lists all commands if `[command]` is not specified
         """
         if command is not None:
-            await ctx.send(embed=await car.command_help(command, ctx))
+            await ctx.send(embed=car.command_help(command, ctx))
             return
 
         e = car.embed(
