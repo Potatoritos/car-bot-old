@@ -11,7 +11,9 @@ for module in (
     'modules.guilds',
     'modules.test_module',
     'modules.utility',
-    'modules.moderation'
+    'modules.moderation',
+    'modules.typing',
+    'modules.pinboard'
 ):
     bot.load_module(module)
 

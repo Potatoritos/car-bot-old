@@ -11,7 +11,8 @@ __all__ = [
     'to_text_channel',
     'to_role',
     'to_message',
-    'to_command'
+    'to_command',
+    'to_emoji'
 ]
 
 class Converter(object):
@@ -47,7 +48,7 @@ def to_int(lower=None, upper=None):
 
     return Converter(converter, "an integer")
 
-def to_float(lower=None, upper=None):
+def to_float(*, lower=None, upper=None):
     def converter(ctx, obj):
         spl = obj.split('/')
 
@@ -126,7 +127,7 @@ def to_member(*, fuzzy=True, prompt=True, amount=None):
 
     return Converter(converter, "a member")
 
-def to_text_channel(fuzzy=True, prompt=True, amount=None):
+def to_text_channel(*, fuzzy=True, prompt=True, amount=None):
     def converter(ctx, obj):
         if obj.startswith('<#') and obj[-1] == '>':
             obj = obj[2:-1]
@@ -146,7 +147,7 @@ def to_text_channel(fuzzy=True, prompt=True, amount=None):
 
     return Converter(converter, "a text channel")
 
-def to_role(fuzzy=True, prompt=True, amount=None):
+def to_role(*, fuzzy=True, prompt=True, amount=None):
     def converter(ctx, obj):
         if obj.startswith('<@&') and obj[-1] == '>':
             obj = obj[3:-1]
@@ -193,4 +194,38 @@ def to_command():
         return command
 
     return Converter(converter, "a command")
+
+def to_emoji(*, allow_unicode_emojis=False, to_id=False):
+    def converter(ctx, obj):
+        # doesn't actually check if obj is an emoji (obj can be any character)
+        if len(obj) == 1 and allow_unicode_emojis:
+            return obj
+
+        if obj.startswith('<:') and obj.endswith('>'):
+            try:
+                obj = int(obj.split(':')[-1][:-1])
+            except ValueError:
+                pass
+
+        try:
+            e = discord.utils.get(ctx.guild.emojis, id=int(obj))
+            if e is not None:
+                return e
+        except ValueError:
+            pass
+
+        e = discord.utils.get(ctx.guild.emojis, name=obj)
+        if e is not None:
+            return e
+
+        f = fuzzy_match(
+            obj, ctx.guild.emojis, 1, lambda x: x.name.lower()
+        )[0][0]
+
+        if to_id:
+            return f.id
+        else:
+            return f
+
+    return Converter(converter, "an emoji")
 

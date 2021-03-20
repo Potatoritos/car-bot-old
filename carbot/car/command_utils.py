@@ -44,6 +44,8 @@ def command_outline(cmd, ctx=None, highlight_begin=None,
     def format_arg(val, idx, bracket=True, kwarg_name=None):
         if isinstance(idx, str):
             val = f"{('--' if len(idx) > 1 else '-')}{idx} {val}"
+            if val[-1] == ' ':
+                val = val[:-1]
             arg = cmd.kwargs[idx]
         else:
             arg = cmd.args[idx]
@@ -51,24 +53,29 @@ def command_outline(cmd, ctx=None, highlight_begin=None,
         if bracket:
             val = bracket_arg(arg, val)
 
-        return " " + highlight_arg(format_arg_value(val), idx)
+        return highlight_arg(format_arg_value(val), idx)
 
-    outline = f"``{prefix}{cmd.name}"
-    for i in range(len(args)):
+    outline = []
+    for i, arg in enumerate(args):
         if i > len(cmd.args):
             break
 
-        outline += format_arg(args[i], i, bracket=False)
+        outline.append(format_arg(arg, i, bracket=False))
 
     for i in range(len(args), len(cmd.args)):
-        outline += format_arg(cmd.args[i].name, i)
+        outline.append(format_arg(cmd.args[i].name, i))
 
     for _, kwarg in cmd.kwargs.items():
         if kwarg.name in kwargs:
-            outline += format_arg(kwargs[kwarg.name],
-                                    kwarg.name, bracket=False)
+            outline.append(format_arg(kwargs[kwarg.name],
+                                    kwarg.name, bracket=False))
         else:
-            outline += format_arg(kwarg.doc[0], kwarg.name)
+            if isinstance(kwarg.doc, tuple):
+                outline.append(format_arg(kwarg.doc[0], kwarg.name))
+            else:
+                outline.append(format_arg("", kwarg.name))
+
+    outline = f"``{prefix}{cmd.name} {' '.join(outline)}"
 
     if outline[-1] == '`':
         return outline[0:-2]

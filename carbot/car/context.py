@@ -4,11 +4,12 @@ from .utils import embed, zwsp
 
 
 __all__ = [
-    'Context'
+    'Context',
+    'copy_ctx'
 ]
 
 class Context(object):
-    def __init__(self, msg, prefix, content, bot):
+    def __init__(self, *, msg, bot, prefix, content, silent=False):
         self.msg = msg
         self.prefix = prefix
         self.content = content
@@ -22,11 +23,18 @@ class Context(object):
 
         self.command = None
 
+        self.silent = silent
+
     async def send(self, text=None, filter_pings=True, *args, **kwargs):
+        if self.silent:
+            return
         if filter_pings and text is not None:
             text = zwsp(str(text), '@')
 
         return await self.channel.send(text, *args, **kwargs)
+
+    async def reply(self, *args, **kwargs):
+        await self.send(*args, **kwargs, reference=self.msg.to_reference())
 
     async def send_error(self, msg, highlight_begin=None,
                             highlight_end=None, footer=None):
@@ -46,3 +54,6 @@ class Context(object):
     async def confirm(self, text):
         pass
 
+def copy_ctx(ctx, **kwargs):
+    return Context(msg=ctx.msg, bot=ctx.bot, prefix=ctx.prefix,
+                   content=ctx.content, **kwargs)

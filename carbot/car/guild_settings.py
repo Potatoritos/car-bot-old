@@ -24,6 +24,8 @@ DEFAULT_SETTINGS = {
     'role_unverified': -1
 }
 
+# TODO: generalize to Settings
+
 class GuildSettings(object):
     def __init__(self, conn, guild_id):
         object.__setattr__(self, '_cache', {})

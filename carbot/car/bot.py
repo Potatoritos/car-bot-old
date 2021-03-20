@@ -78,21 +78,17 @@ class Bot(discord.Client):
             return
 
         prefix = self.guild_settings[msg.guild.id].prefix
-
         if not msg.content.startswith(prefix):
             return
 
         command_name = msg.content[len(prefix):].split(' ')[0]
-
         try:
             command = self.commands[command_name]
         except KeyError:
             return
 
         content = msg.content[len(prefix)+len(command_name)+1:]
-
-        ctx = Context(msg, prefix, content, self)
-
+        ctx = Context(msg=msg, bot=self, prefix=prefix, content=content)
         await command.run(ctx)
 
     def command(self, **kwargs):

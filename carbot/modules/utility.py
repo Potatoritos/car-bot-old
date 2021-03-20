@@ -1,5 +1,6 @@
 import car
 import random
+from googletrans import Translator
 
 
 class Utility(car.Cog):
@@ -9,25 +10,39 @@ class Utility(car.Cog):
     @car.command(aliases=["avatar"])
     async def pfp(self, ctx, member: car.to_member()):
         """
-        Displays someone's profile picture
+        Displays someone's profile picture (and provides download links)
         """
+        links = [
+            (f"[[.{form}]]({member.avatar_url_as(format=form)} "
+             f"\"Link to .{form}\")")
+            for form in ('webp', 'png', 'jpg')
+        ]
+
         if member.is_avatar_animated():
-            link = f"[[.gif]]({member.avatar_url} \"Link to .gif\") "
-        else:
-            link = ""
+            links.append(f"[[.gif]]({member.avatar_url} \"Link to .gif\") ")
 
-        as_webp = member.avatar_url_as(format='webp')
-        as_png = member.avatar_url_as(format='png')
-
-        link += (
-            f"[[.webp]]({as_webp} \"Link to .webp\") "
-            f"[[.png]]({as_png} \"Link to .png\") "
-        )
-
+        link = ' '.join(links)
         e = car.embed(description=f"{member.mention}'s avatar\n{link}")
         e.set_image(url=member.avatar_url)
 
         await ctx.send(embed=e)
+
+    @car.command(aliases=["emote"])
+    async def emoji(self, ctx, emoji: car.to_emoji()):
+        """
+        Displays a server emoji (and provides download links)
+        """
+        links = [
+            f"[[.{form}]]({emoji.url_as(format=form)} \"Link to .{form}\")"
+            for form in ('webp', 'png', 'jpg')
+        ]
+        if emoji.animated:
+            links.append(f"[[.gif]]({emoji.url} \"Link to .gif\") ")
+
+        embed = car.embed(description=f":{emoji.name}:\n{' '.join(links)}")
+        embed.set_image(url=emoji.url)
+
+        await ctx.send(embed=embed)
 
     @car.command()
     async def rand(
@@ -41,7 +56,9 @@ class Utility(car.Cog):
         ) = None,
         *,
         u: ("Selects a floating point number instead of an integer") = False,
-        r: car.to_int() // ("amount", "... rounded to `[amount]` decimal places") = False
+        r: car.to_int() // (
+            "amount", "... rounded to `(amount)` decimal places"
+        ) = False
     ):
         """
         Selects a random number between a range
@@ -89,7 +106,7 @@ class Utility(car.Cog):
 
             for weight in w:
                 try:
-                    weights.append(await car.to_int().convert(ctx, weight))
+                    weights.append(car.to_int().convert(ctx, weight))
                 except car.ArgumentError as e:
                     raise car.CommandError(
                         "The weights must be comma seperated integers!"
@@ -114,12 +131,18 @@ class Utility(car.Cog):
         message: car.to_message() // (
             "The message. If left blank, the most recent message with a "
             "text file attachment will be selected."
-        ) = None
+        ) = None,
+        *,
+        a: car.to_int() // (
+            "n", "selects the `(n)`th attachment in `(message)`"
+        ) = 1,
+        m: car.to_int() // (
+            "n", "specifies to select the `(n)`th last message with an "
+            "attachment, if `(message)` is not specified"
+        ) = 1,
     ):
         """
         **WIP-not working yet!**
         Displays the contents of a text file.
-        The contents will be formatted in a code block if the name of the file is not message.txt.
         """
-        pass
-
+        await ctx.send("wip")

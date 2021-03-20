@@ -1,5 +1,6 @@
 import inspect
 import discord
+from collections import deque
 from .exception import CheckError, ArgumentError, CommandError
 from .converter import Converter, to_member #, to_channel
 from .command_utils import command_usage
