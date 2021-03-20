@@ -1,5 +1,4 @@
 from .command_utils import command_outline
-from .parse_args import parse_args
 from .utils import embed, zwsp
 import discord
 
@@ -16,13 +15,14 @@ class Context(object):
         self.content = content
         self.bot = bot
 
-        self.args, self.kwargs = parse_args(content)
+        # these variables are defined in Command._run()
+        self.args = None
+        self.kwargs = None
+        self.command = None
 
         self.guild = msg.guild
         self.channel = msg.channel
         self.author = msg.author
-
-        self.command = None
 
         self.silent = silent
 

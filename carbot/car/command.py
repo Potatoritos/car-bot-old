@@ -4,6 +4,7 @@ from collections import deque
 from .exception import CheckError, ArgumentError, CommandError
 from .converter import Converter, to_member #, to_channel
 from .command_utils import command_usage
+from .parse_args import parse_args
 
 
 __all__ = [
@@ -94,6 +95,12 @@ class Command(object):
 
     async def _run(self, ctx, run_checks=True):
         ctx.command = self
+
+        try:
+            ctx.args, ctx.kwargs = parse_args(ctx.content)
+        except ArgumentError as e:
+            await ctx.send_error(e.error_msg)
+            return
 
         if run_checks:
             try:
