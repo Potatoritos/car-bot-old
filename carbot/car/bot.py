@@ -28,6 +28,7 @@ class Bot(discord.Client):
         self.guild_settings = GuildSettingsList(self.conn)
 
         self.cogs = {}
+        self.module_cogs = {}
         self.modules = {}
 
     def add_cog(self, cog):
@@ -52,18 +53,19 @@ class Bot(discord.Client):
             if not hasattr(obj, 'mro') or not obj.mro()[1] is Cog:
                 continue
 
-            if name not in self.cogs:
-                self.cogs[name] = []
+            if name not in self.module_cogs:
+                self.module_cogs[name] = []
 
             cog = obj(self)
-            self.cogs[name].append(cog)
+            self.module_cogs[name].append(cog);
+            self.cogs[type(cog).__name__] = cog
             self.add_cog(cog)
 
     def unload_module(self, name):
-        for cog in self.cogs[name]:
+        for cog in self.module_cogs[name]:
             self.remove_cog(cog)
 
-        del self.cogs[name]
+        del self.module_cogs[name]
         del self.modules[name]
 
     def reload_module(self, name):

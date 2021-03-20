@@ -13,7 +13,8 @@ for module in (
     'modules.utility',
     'modules.moderation',
     'modules.typing',
-    'modules.pinboard'
+    'modules.pinboard',
+    'modules.sound'
 ):
     bot.load_module(module)
 

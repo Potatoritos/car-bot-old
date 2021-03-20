@@ -1,6 +1,7 @@
 from .command_utils import command_outline
 from .parse_args import parse_args
 from .utils import embed, zwsp
+import discord
 
 
 __all__ = [
@@ -33,14 +34,21 @@ class Context(object):
 
         return await self.channel.send(text, *args, **kwargs)
 
-    async def reply(self, *args, **kwargs):
-        await self.send(*args, **kwargs, reference=self.msg.to_reference())
+    async def reply(self, *args, ping=False, **kwargs):
+        allowed_mentions = None
+        if not ping:
+            allowed_mentions = discord.AllowedMentions(replied_user=False)
+        return await self.send(
+            *args, **kwargs,
+            allowed_mentions=allowed_mentions,
+            reference=self.msg.to_reference()
+        )
 
     async def send_error(self, msg, highlight_begin=None,
                             highlight_end=None, footer=None):
         if highlight_begin is None:
             e = embed(description=f":x: {msg}")
-            return await self.channel.send(embed=e)
+            return await self.reply(embed=e)
         else:
             outline = command_outline(self.command, self,
                                         highlight_begin, highlight_end)
@@ -49,7 +57,7 @@ class Context(object):
             if footer is not None:
                 e.set_footer(text=footer)
 
-            return await self.channel.send(embed=e)
+            return await self.reply(embed=e)
 
     async def confirm(self, text):
         pass

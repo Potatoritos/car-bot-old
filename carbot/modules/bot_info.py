@@ -30,13 +30,15 @@ class BotInfo(car.Cog):
         commands = {}
 
         for cmd in self.bot.commands:
-
             if cmd.category == "Hidden":
+                continue
+            try:
+                cmd.run_checks(ctx)
+            except car.CheckError:
                 continue
 
             if cmd.category not in commands:
                 commands[cmd.category] = []
-
             commands[cmd.category].append(cmd.name)
 
         for category in commands:
