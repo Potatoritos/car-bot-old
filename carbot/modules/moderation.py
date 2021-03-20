@@ -137,7 +137,27 @@ class Moderation(car.Cog):
         role = discord.utils.get(ctx.guild.roles, id=536552924583821313)
         ctx2 = car.copy_ctx(ctx, silent=True)
         await cmd.exec(ctx2, [member, role], {'a': True})
-        e = car.embed(description=f":rotating_light: {member} has been muted")
+
+        e = car.embed(
+            description=f":rotating_light: {member.mention} has been muted"
+        )
+        await ctx.send(embed=e)
+
+    @car.command()
+    @car.requires_permissions(manage_roles=True)
+    async def unmute(self, ctx, member: car.to_member()):
+        """
+        Removes the muted role from someone
+        """
+        cmd = self.bot.commands['role']
+        role = discord.utils.get(ctx.guild.roles, id=536552924583821313)
+        ctx2 = car.copy_ctx(ctx, silent=True)
+        await cmd.exec(ctx2, [member, role], {'r': True})
+
+        e = car.embed(
+            description=f":rotating_light: {member.mention} has been unmuted"
+        )
+        await ctx.send(embed=e)
 
     @car.command()
     @car.requires_permissions(manage_messages=True)
@@ -145,8 +165,12 @@ class Moderation(car.Cog):
         """
         Clears the chat
         """
-        await ctx.send("\n"*100 + "__ __")
-        await ctx.reply("Chat cleared!")
+        await ctx.send("Clearing chat..." + "\n"*200 + "** **")
+        e = car.embed(description=":rotating_light: Chat cleared!")
+        e.set_footer(text="This message will disappear in 5 seconds.")
+        m = await ctx.send(embed=e)
+        await asyncio.sleep(5)
+        await m.delete()
 
     @car.command()
     @car.requires_permissions(manage_messages=True)
