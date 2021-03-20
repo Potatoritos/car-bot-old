@@ -2,6 +2,7 @@ import car
 import discord
 from aiogtts import aiogTTS
 import os
+import sqlite3
 
 
 class Sound(car.Cog):
