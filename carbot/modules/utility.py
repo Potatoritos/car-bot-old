@@ -83,7 +83,30 @@ class Utility(car.Cog):
         self, ctx,
         choices: "Space seperated choices",
         *,
-        k: car.to_int(lower=1, upper=100) // (
+        k: car.to_int(lower=1, upper=1000) // (
+            "The amount of choices to select"
+        )
+    ):
+        """
+        Selects random choices from a list (without replacement)
+        note: choices with spaces do not work right now
+        """
+        choices = choices.split(' ')
+        sample = random.sample(choices, min(k, len(choices)))
+        result = ' '.join(f"`{s}`" for s in sample)
+
+        if len(result) > 1950:
+            raise car.CommandError("I can't fit this in a single message!")
+
+        e = car.embed(description=f":game_die: {result}")
+        await ctx.reply(embed=e)
+
+    @car.command()
+    async def rchoose(
+        self, ctx,
+        choices: "Space seperated choices",
+        *,
+        k: car.to_int(lower=1, upper=1000) // (
             "The amount of choices to select (with replacement). Default: 1"
         ) = 1,
         w: (
@@ -91,7 +114,8 @@ class Utility(car.Cog):
         ) = None
     ):
         """
-        Selects random choices from a list of choices
+        Selects random choices from a list of choices (with replacement)
+        note: choices with spaces do not work right now
         """
         choices = choices.split(' ')
 
@@ -125,24 +149,3 @@ class Utility(car.Cog):
 
         await ctx.send(embed=car.embed(description=f":game_die: {selected}"))
 
-    @car.command()
-    async def cat(
-        self, ctx,
-        message: car.to_message() // (
-            "The message. If left blank, the most recent message with a "
-            "text file attachment will be selected."
-        ) = None,
-        *,
-        a: car.to_int() // (
-            "n", "selects the `(n)`th attachment in `(message)`"
-        ) = 1,
-        m: car.to_int() // (
-            "n", "specifies to select the `(n)`th last message with an "
-            "attachment, if `(message)` is not specified"
-        ) = 1,
-    ):
-        """
-        **WIP-not working yet!**
-        Displays the contents of a text file.
-        """
-        await ctx.send("wip")

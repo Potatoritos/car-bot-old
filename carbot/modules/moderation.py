@@ -16,7 +16,7 @@ class Moderation(car.Cog):
     async def on_message_edit(self, bef, aft):
         if bef.guild.id != 495327409487478785:
             return
-        if bef.author.bot:
+        if bef.author.bot or bef.content == aft.content:
             return
         # TODO: handle len(bef) + len(aft) > 2000
         c = discord.utils.get(bef.guild.text_channels, id=631182593718484992)
@@ -24,7 +24,7 @@ class Moderation(car.Cog):
             f"[[Jump]]({bef.jump_url}) {bef.author.mention} in"
             f"{bef.channel.mention}"
         ))
-        e.set_author(name="Message Delete",
+        e.set_author(name="Message Edit",
                      icon_url=bef.author.avatar_url)
         if len(bef.content) > 0:
             e.add_field(name="Before", value=bef.content)
@@ -174,11 +174,44 @@ class Moderation(car.Cog):
 
     @car.command()
     @car.requires_permissions(manage_messages=True)
-    async def purge(self, ctx, amount: car.to_int(lower=1, upper=500)):
+    async def purge(
+        self, ctx,
+        amount: car.to_int(lower=1, upper=500) // (
+            "the amount of messages to consider"
+        ),
+        *,
+        e: "When specified, excludes instead of includes" = False,
+        b: "When specified, only includes bots" = False,
+        u: (": seperated members", "The members to include") = None
+    ):
         """
         Deletes messages
+
+        **Examples**
+        `purge 100 -b`
+        Purge the last 100 messages, only including bots
+
+        `purge 200 -eb`
+        Purge the last 100 messages, excluding bots
+
+        `purge 10 -u member1`
+        Purge the last 10 messages, only including messages by member1
+
+        `purge 30 -ebu member1:member2:member3`
+        Purge the last 30 messages, excluding bots and the specified members
         """
-        deleted = await ctx.channel.purge(limit=amount+1)
+        conv = car.to_member()
+        if u is None:
+            members = set()
+        else:
+            members = {conv.convert(ctx, m) for m in u.split(':')}
+
+        def check(msg):
+            if (b and msg.author.bot) or (u and msg.author):
+                return not e
+            return e
+
+        deleted = await ctx.channel.purge(limit=amount+1, check=check)
 
         e = car.embed(description=(
             f":rotating_light: Deleted **{len(deleted)}** messages."

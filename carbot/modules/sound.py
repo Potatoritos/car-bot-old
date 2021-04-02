@@ -172,9 +172,14 @@ class Sound(car.Cog):
             f"category `{category}`"
         )
 
-    @car.command()
+    @car.command(aliases=["sfxdel", "sfxdelete"])
     @car.trusted_only()
-    async def sfxremove(self, ctx, name: "the sound effect to delete"):
+    async def sfxremove(
+        self, ctx,
+        name: "the sound effect to delete",
+        *,
+        k: "If specified, does not delete any files"
+    ):
         """
         Removes a sound effect
         """
@@ -182,7 +187,13 @@ class Sound(car.Cog):
         cur = self.bot.conn.cursor()
         cur.execute("DELETE FROM sfxlist WHERE name = ?", (name,))
         self.bot.conn.commit()
-        os.remove(sound[1])
+
+        if not k:
+            try:
+                os.remove(sound[1])
+            except FileNotFoundError:
+                pass
+
         await ctx.reply(f"removed `{sound}`")
 
     @car.command()

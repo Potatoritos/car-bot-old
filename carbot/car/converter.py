@@ -81,8 +81,11 @@ def match_by_args(to_match, against, *, amount, prompt, key):
 def to_member(*, fuzzy=True, prompt=True, amount=None):
     def converter(ctx, obj):
         # Get ID from obj if obj is a mention
-        if obj.startswith('<@!') and obj[-1] == '>':
-            obj = obj[3:-1]
+        if obj[-1] == '>':
+            if obj.startswith('<@!'):
+                obj = obj[3:-1]
+            elif obj.startswith('<@'):
+                obj = obj[2:-1]
 
         try:
             # Get member if obj is an ID

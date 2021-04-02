@@ -99,9 +99,17 @@ def command_usage(cmd, ctx):
         ) + "\n" + s
 
 def command_help(cmd, ctx):
+    l = cmd.doc.find('\n\n')
+    if l == -1:
+        doc = cmd.doc
+        notes = ""
+    else:
+        doc = cmd.doc[:l]
+        notes = cmd.doc[l+2:]
+
     e = embed(
         title=f"Command ─ {cmd.name}",
-        description=cmd.doc
+        description=doc
     )
 
     e.add_field(
@@ -115,6 +123,13 @@ def command_help(cmd, ctx):
             name="Aliases",
             value=" ".join(f"`{a}`" for a in cmd.aliases),
             inline=False
+        )
+
+    notes = cmd.doc[cmd.doc.find('\n\n')+2:]
+    if len(notes) > 0:
+        e.add_field(
+            name="​", # ZWSP for now
+            value=notes
         )
 
     return e
