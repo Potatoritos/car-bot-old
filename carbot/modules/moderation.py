@@ -207,7 +207,7 @@ class Moderation(car.Cog):
             members = {conv.convert(ctx, m) for m in u.split(':')}
 
         def check(msg):
-            if (b and msg.author.bot) or (u and msg.author):
+            if (b and msg.author.bot) or (u and msg.author in members):
                 return not e
             return e
 

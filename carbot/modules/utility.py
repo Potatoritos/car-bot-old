@@ -85,7 +85,7 @@ class Utility(car.Cog):
         *,
         k: car.to_int(lower=1, upper=1000) // (
             "The amount of choices to select"
-        )
+        ) = 1
     ):
         """
         Selects random choices from a list (without replacement)
