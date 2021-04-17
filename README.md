@@ -1,6 +1,6 @@
 # car-bot
 
-wip
+My personal discord bot.
 
 to run:
 
