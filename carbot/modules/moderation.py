@@ -2,6 +2,8 @@ import discord
 import car
 import random
 import asyncio
+from collections import deque
+import time
 
 
 class Moderation(car.Cog):
@@ -11,7 +13,65 @@ class Moderation(car.Cog):
             global_category="Moderation",
             global_checks=[car.guild_must_be_id(495327409487478785)]
         )
+        self.vc_prev_msg = None
+        self.vc_prev_msg_uid = None
+        self.vc_prev_msg_cnt = 0
 
+        self.vc_cnt = {}
+        self.vc_dq = deque()
+
+    @car.listener
+    async def on_message(self, msg):
+        if msg.channel.id != 818615295068733500:
+            return
+
+        self.vc_prev_msg_cnt += 1
+
+    @car.listener
+    async def on_voice_state_update(self, member, bef, aft):
+        if member.guild.id != 495327409487478785:
+            return
+        if member.bot or bef.channel == aft.channel:
+            return
+
+        if aft.channel is None:
+            status = "◀—"
+            channel = bef.channel
+        else:
+            status = "—▶"
+            channel = aft.channel
+
+        status_msg = f"`{status}` `🔊 {channel.name}`"
+
+        while len(self.vc_dq) and time.monotonic() - self.vc_dq[0][0] > 15:
+            action = self.vc_dq.popleft()
+            self.vc_cnt[action[1]] -= 1
+            
+        if member.id not in self.vc_cnt:
+            self.vc_cnt[member.id] = 0
+        self.vc_cnt[member.id] += 1
+        self.vc_dq.append((time.monotonic(), member.id))
+
+        if self.vc_cnt[member.id] > 5:
+            return
+
+        if self.vc_prev_msg is not None and self.vc_prev_msg_cnt <= 1 \
+                and member.id == self.vc_prev_msg_uid:
+            prev = self.vc_prev_msg.embeds[0]
+            e = car.embed(description=f"{prev.description}\n{status_msg}")
+            e.set_author(name=prev.author.name, icon_url=prev.author.icon_url)
+            await self.vc_prev_msg.edit(embed=e)
+        else:
+            e = car.embed(description=status_msg)
+            e.set_author(name=member.name,
+                            icon_url=member.avatar_url_as(size=32))
+            log_channel = discord.utils.get(member.guild.text_channels,
+                                            id=818615295068733500)
+            self.vc_prev_msg_cnt = 0
+            msg = await log_channel.send(embed=e)
+            self.vc_prev_msg = msg
+            self.vc_prev_msg_uid = member.id
+    
     @car.listener
     async def on_message_edit(self, bef, aft):
         if bef.guild.id != 495327409487478785:

@@ -1,6 +1,7 @@
 import car
 import sys
 import os
+from collections import deque
 
 
 class Core(car.Cog):

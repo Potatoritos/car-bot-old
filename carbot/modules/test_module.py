@@ -32,10 +32,16 @@ class TestModule(car.Cog):
         await ctx.send("hello")
 
     @car.command()
-    async def etest(
-        self, ctx
-    ):
-        raise car.CommandError("bong")
+    async def etest(self, ctx):
+        e = car.embed(description=f"🠖 `🔊 wob bob`\n\n🠔 `🔊 wob bob`")
+        e.set_author(name=f"{ctx.author.name}", icon_url="https://cdn.discordapp.com/avatars/153240776216805376/6a176937aa3ba153a12e6dc44d75949a.png?size=32")
+        await ctx.send(embed=e)
+
+    @car.command()
+    async def eetest(self, ctx):
+        e = car.embed(description=f"➞ `🔊 wob bob`")
+        e.set_author(name=f"{ctx.author.name}", icon_url="https://cdn.discordapp.com/avatars/153240776216805376/6a176937aa3ba153a12e6dc44d75949a.png?size=32")
+        await ctx.send(embed=e)
 
     @car.command()
     async def mtest(self, ctx, arg1: car.to_member(prompt=False)):
