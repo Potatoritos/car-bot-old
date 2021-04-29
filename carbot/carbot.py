@@ -14,7 +14,8 @@ for module in (
     'modules.moderation',
     'modules.typing',
     'modules.pinboard',
-    'modules.sound'
+    'modules.sound',
+    'modules.simulation'
 ):
     bot.load_module(module)
 

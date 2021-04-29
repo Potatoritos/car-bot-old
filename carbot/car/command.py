@@ -142,7 +142,8 @@ class Command(object):
                     conv_args.append(c)
                 else:
                     conv_args.append(conv.convert(ctx, args[i]))
-
+            except IndexError:
+                break
             except ArgumentError as e:
                 raise ArgumentError(e.error_msg, i)
 
