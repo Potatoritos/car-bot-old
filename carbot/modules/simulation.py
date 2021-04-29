@@ -9,7 +9,7 @@ class Simulation(car.Cog):
     @car.command()
     async def akpull(
         self, ctx,
-        pulls: car.to_int() // (
+        pulls: car.to_int(lower=1, upper=10000) // (
             "The amount of pulls to pull"
             ),
         *,

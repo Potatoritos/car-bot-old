@@ -27,13 +27,13 @@ class Converter(object):
 def check_is_between(obj, lower, upper):
     if lower is not None and upper is not None:
         if not lower <= obj <= upper:
-            raise ArgumentError(f"{arg} must be between {lower} and {upper}!")
+            raise ArgumentError(f"This must be between {lower} and {upper}!")
 
     elif lower is None and upper is not None and obj > upper:
-        raise ArgumentError(f"{arg} must be at most {upper}!")
+        raise ArgumentError(f"This must be at most {upper}!")
 
     elif lower is not None and upper is None and obj < lower:
-        raise ArgumentError(f"{arg} must be at least {upper}!")
+        raise ArgumentError(f"This must be at least {upper}!")
 
 def to_int(lower=None, upper=None):
     def converter(ctx, obj):

@@ -74,8 +74,9 @@ AK_SimulationResult AK_simulatePulls(int times, int amtPulls, AK_PullSettings ps
         AK_PullResult p = AK_pullMultiple(amtPulls, ps);
         results += p;
 
-        double a = p.amt5*ps.prob5RateUp;
+        sr.amt5[std::min(6, p.amt5)]++;
 
+        double a = p.amt5*ps.prob5RateUp;
         double f = std::floor(a), c = std::ceil(a);
         
         if (f != c) { 
