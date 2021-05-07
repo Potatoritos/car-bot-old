@@ -54,6 +54,10 @@ void AK_pullMultiple(int *results, int amt, AK_PullSettings &ps) {
             continue;
         }
         results[p]++;
+        if (p == 0) results[1]++;
+        if (p <= 1) results[2]++;
+        if (p == 3) results[4]++;
+        if (p == 3 || p == 4) results[5]++;
         since5 = 0;
         pity5s++;
         if (p <= 2) since6 = 0;
@@ -82,9 +86,9 @@ AK_SimulationResult AK_simulatePulls(int times, int amtPulls, AK_PullSettings ps
 static PyObject *ak_pull(PyObject *self, PyObject *args, PyObject *kwargs) {
     static const char *kwlist[] = {
         "times", "pull_amount", "prob_ge5", "prob_ge6",
-        "pity6_inc", "prob_5rateup", "pity5", "pity6",
-        "size_5pool", "size_6pool", "since5", "since6",
-        "pity5_amt", NULL
+        "pity6_inc", "prob_5rateup", "prob_6rateup", "pity5",
+        "pity6", "size_5pool", "size_6pool", "since5",
+        "since6", "pity5_amt", NULL
     }; 
     int times, amtPulls;
     float probGE5 = 0.1, probGE6 = 0.02, pity6Inc = 0.02,
