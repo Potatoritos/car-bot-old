@@ -87,11 +87,6 @@ class Simulation(car.Cog):
                 r[i][j] = f"{100*results[i][j]:6.1f}%"
         s = (
              "```css\n"
-            f"Pulls: {pulls}, 5* pity: {since5}/{pity5}, 6* pity: {since6}/"
-            f"{pity6}, Simulations: {times}\n\nP(≥5*): {probge5}, "
-            f"P(6*): {probge6}, 6* Pity Increment: {pity6inc}, P(Rate-up | 5*)"
-            f": {prob5rateup}, P(Rate-up | 6*): {prob6rateup}, 5* Rate-up pool"
-            f" size: {size5pool}, 6* Rate-up pool size: {size6pool};\n\n"
              "[5*]  Any      Rate-up  Specific\n"
             f"Ex. {r[5][0]}  {r[4][0]}  {r[3][0]}\n"
             f" 0x {r[5][1]}  {r[4][1]}  {r[3][1]}\n"
@@ -113,5 +108,22 @@ class Simulation(car.Cog):
             "```"
         )
 
-        await ctx.send(s);
+        e = car.embed(
+                title="Simulation Results",
+                description=(
+                    f"{pulls} pulls, starting with {since5}/{pity5} 5* pity "
+                    f"and {since6}/{pity6} 6* pity\n{s}"
+                )
+            )
+        e.set_footer(
+                text=(
+                    f"Simulations: {times}\nP(≥5*) = {probge5}, P(6*) = "
+                    f"{probge6}, P(Rate-up | 5*) = {prob5rateup}, "
+                    f"P(Rate-up | 6*) = {prob6rateup}, 5* Rate-up pool "
+                    f"size: {size5pool}, 6* Rate-up pool size: {size6pool}"
+                    f", 6* Pity Increment: {pity6inc}\n\n"
+                )
+            )
+
+        await ctx.send(embed=e);
 
