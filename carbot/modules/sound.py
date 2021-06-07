@@ -76,6 +76,7 @@ class Sound(car.Cog):
         Leaves the voice channel
         """
         vc = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
+        print(vc)
         if vc is None:
             raise car.CommandError("I'm not in a voice channel!")
         await vc.disconnect()

@@ -4,6 +4,7 @@ import random
 import asyncio
 from collections import deque
 import time
+import re
 
 
 class Moderation(car.Cog):
@@ -41,7 +42,7 @@ class Moderation(car.Cog):
             status = "—▶"
             channel = aft.channel
 
-        status_msg = f"`{status}` `🔊 {channel.name}`"
+        status_msg = f"`{status}` <#{channel.id}>"
 
         while len(self.vc_dq) and time.monotonic() - self.vc_dq[0][0] > 15:
             action = self.vc_dq.popleft()
@@ -242,7 +243,8 @@ class Moderation(car.Cog):
         *,
         e: "When specified, excludes instead of includes" = False,
         b: "When specified, only includes bots" = False,
-        u: (": seperated members", "The members to include") = None
+        u: ("colon seperated members", "The members to include") = None,
+        r: ("regex", "Includes messages that match a regex") = None
     ):
         """
         Deletes messages
@@ -267,11 +269,15 @@ class Moderation(car.Cog):
             members = {conv.convert(ctx, m) for m in u.split(':')}
 
         def check(msg):
-            if (b and msg.author.bot) or (u and msg.author in members):
+            if (b and msg.author.bot) or (u and msg.author in members) \
+                    or (r and re.match(r, msg.content, re.DOTALL)):
                 return not e
             return e
 
-        deleted = await ctx.channel.purge(limit=amount+1, check=check)
+        if not e and not b and u is None and r is None:
+            deleted = await ctx.channel.purge(limit=amount+1)
+        else:
+            deleted = await ctx.channel.purge(limit=amount+1, check=check)
 
         e = car.embed(description=(
             f":rotating_light: Deleted **{len(deleted)}** messages."

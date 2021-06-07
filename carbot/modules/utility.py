@@ -41,6 +41,7 @@ class Utility(car.Cog):
 
         embed = car.embed(description=f":{emoji.name}:\n{' '.join(links)}")
         embed.set_image(url=emoji.url)
+        embed.set_footer(text=f"ID: {emoji.id}")
 
         await ctx.send(embed=embed)
 

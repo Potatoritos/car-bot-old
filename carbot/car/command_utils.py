@@ -102,7 +102,7 @@ def command_help(cmd, ctx):
     l = cmd.doc.find('\n\n')
     if l == -1:
         doc = cmd.doc
-        notes = ""
+        notes = None
     else:
         doc = cmd.doc[:l]
         notes = cmd.doc[l+2:]
@@ -125,10 +125,9 @@ def command_help(cmd, ctx):
             inline=False
         )
 
-    notes = cmd.doc[cmd.doc.find('\n\n')+2:]
-    if len(notes) > 0:
+    if notes is not None:
         e.add_field(
-            name="​", # ZWSP for now
+            name="More Information",
             value=notes
         )
 

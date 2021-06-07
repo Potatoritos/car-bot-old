@@ -5,55 +5,40 @@ import random
 class TestModule(car.Cog):
     def __init__(self, bot):
         super().__init__(bot, global_category="Hidden")
+        self.last_msg = {}
+        self.responses = []
 
-    @car.command()
-    async def test3(self, ctx, name):
-        doc = self.bot.commands[name].help('c.', [])
+    def markov_text(text):
+        resp = {}
+        spl = text.split(' ')
+        for i in range(len(spl)-1):
+            if spl[i] not in resp:
+                resp[spl[i]] = []
+            resp[spl[i]].append(spl[i+1])
+        return resp
 
-        embed = discord.Embed(description=doc)
+    def gen(resp, min_length):
+        length = 0
+        words = []
+        while length < min_length:
+            return 
 
-        await ctx.send(embed=embed)
+    @car.listener
+    async def on_message(self, msg):
+        if msg.guild.id != 495327409487478785 or msg.author.bot:
+            return
+        if msg.channel.id not in (
+                495327409487478787,
+                629034237022044170,
+                57579341361879449
+            ):
+            return
 
-    @car.command()
-    async def test_message_conv(self, ctx, msg: car.to_message()):
-        print(msg)
-        print(msg.content)
+        if msg.channel.id in self.last_msg:
+            self.responses.append(
+                (self.last_msg[msg.channel.id].content, msg.content)
+            )
 
-    @car.command(aliases=['test4'])
-    async def test2(
-        self, ctx,
-        arg1: "test 1",
-        arg2: car.to_int(),
-        arg3: "Optional!!!!!!" = None,
-        *,
-        kwarg1: car.to_int() // ("thing", "sdkfjsdlkf jsldkfjsdlk ") = None,
-        kwarg2: "bong" = None
-    ):
-        await ctx.send("hello")
+        self.last_msg[msg.channel.id] = msg
 
-    @car.command()
-    async def etest(self, ctx):
-        e = car.embed(description=f"🠖 `🔊 wob bob`\n\n🠔 `🔊 wob bob`")
-        e.set_author(name=f"{ctx.author.name}", icon_url="https://cdn.discordapp.com/avatars/153240776216805376/6a176937aa3ba153a12e6dc44d75949a.png?size=32")
-        await ctx.send(embed=e)
-
-    @car.command()
-    async def eetest(self, ctx):
-        e = car.embed(description=f"➞ `🔊 wob bob`")
-        e.set_author(name=f"{ctx.author.name}", icon_url="https://cdn.discordapp.com/avatars/153240776216805376/6a176937aa3ba153a12e6dc44d75949a.png?size=32")
-        await ctx.send(embed=e)
-
-    @car.command()
-    async def mtest(self, ctx, arg1: car.to_member(prompt=False)):
-        # print(arg1)
-        # await ctx.send('\n'.join([f"{m[0]} ({m[1]})" for m in arg1]))
-        await ctx.send(arg1)
-
-    @car.command()
-    async def mmtest(self, ctx, arg1: car.to_member(amount=5)):
-        await ctx.send('\n'.join(f"{m[0]} ({m[1]})" for m in arg1))
-
-    @car.command()
-    async def itest(self, ctx, arg1: car.to_int()):
-        await ctx.send(arg1)
 
