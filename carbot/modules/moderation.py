@@ -21,15 +21,24 @@ class Moderation(car.Cog):
         self.vc_cnt = {}
         self.vc_dq = deque()
 
+        self.votemute_reqs = {}
+        self.votemute_dq = deque()
+        self.votemutes = set()
+        self.votemuted = set()
+
     @car.listener
     async def on_message(self, msg):
-        if msg.channel.id != 818615295068733500:
+        if msg.guild is None:
+            return
+        if msg.guild.id != 495327409487478785:
             return
 
-        self.vc_prev_msg_cnt += 1
+        if msg.channel.id == 818615295068733500:
+            self.vc_prev_msg_cnt += 1
 
     @car.listener
     async def on_voice_state_update(self, member, bef, aft):
+        return
         if member.guild.id != 495327409487478785:
             return
         if member.bot or bef.channel == aft.channel:
@@ -75,6 +84,7 @@ class Moderation(car.Cog):
     
     @car.listener
     async def on_message_edit(self, bef, aft):
+        return
         if bef.guild.id != 495327409487478785:
             return
         if bef.author.bot or bef.content == aft.content:
@@ -95,6 +105,7 @@ class Moderation(car.Cog):
 
     @car.listener
     async def on_message_delete(self, msg):
+        return
         if msg.guild.id != 495327409487478785:
             return
         if msg.author.bot:
@@ -109,6 +120,26 @@ class Moderation(car.Cog):
         if len(msg.content) > 0:
             e.add_field(name="Content", value=msg.content)
         await c.send(embed=e)
+
+    @car.listener
+    async def on_reaction_add(self, reaction, user):
+        try:
+            if reaction.id != "":
+                side = 0
+            elif reaction.id != "":
+                side = 1
+            else:
+                return
+        except AttributeError:
+            return
+
+        if reaction.message not in self.votemute_reqs:
+            return
+
+        if user.id in self.votemute_reqs[reaction.message].voters:
+            pass
+
+        self.votemute_reqs[reaction.message].vote(user, side)
 
     @car.command()
     @car.requires_permissions(manage_roles=True)

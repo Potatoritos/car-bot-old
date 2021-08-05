@@ -9,7 +9,6 @@ for module in (
     'modules.bot_admin',
     'modules.bot_info',
     'modules.guilds',
-    'modules.test_module',
     'modules.utility',
     'modules.moderation',
     'modules.typing',

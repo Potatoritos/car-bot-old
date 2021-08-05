@@ -15,6 +15,15 @@ class Guilds(car.Cog):
 
     @car.listener
     async def on_member_join(self, member):
+        if len(member.name) >= 9 and member.name[6:9] == ' ||':
+            await member.ban()
+        
+            channel = self.bot.guild_settings[member.guild.id].channel_joinleave
+            channel = discord.utils.get(member.guild.text_channels, id=channel)
+
+            await channel.send(f"SHUT UP {member.name}#{member.discriminator} ({member.mention})")
+            return
+
         role = self.bot.guild_settings[member.guild.id].role_unverified
         role = discord.utils.get(member.guild.text_channels, id=role)
 

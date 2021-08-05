@@ -1,6 +1,7 @@
 import car
 import sys
 import os
+import discord
 from collections import deque
 
 
@@ -19,4 +20,6 @@ class Core(car.Cog):
     @car.listener
     async def on_ready(self):
         print("ready!")
+        await self.bot.change_presence(activity=discord.Activity(
+            type=discord.ActivityType.watching, name="people respond to my questions ;)"))
 
