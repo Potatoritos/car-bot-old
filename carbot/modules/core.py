@@ -21,5 +21,5 @@ class Core(car.Cog):
     async def on_ready(self):
         print("ready!")
         await self.bot.change_presence(activity=discord.Activity(
-            type=discord.ActivityType.watching, name="people respond to my questions ;)"))
+            type=discord.ActivityType.watching, name="car"))
 
