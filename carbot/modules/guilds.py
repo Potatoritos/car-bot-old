@@ -18,7 +18,7 @@ class Guilds(car.Cog):
         if member.guild.id != 495327409487478785:
             return
         spl = member.name.split(' ')
-        if len(spl) > 2 and spl[2] == '||':
+        if len(spl) > 2 and spl[1] == '||':
             channel = self.bot.guild_settings[member.guild.id].channel_joinleave
             channel = discord.utils.get(member.guild.text_channels, id=channel)
             await channel.send(f"you are NOT welcome to the wab server ! leave now :blobangery: `{member.name}#{member.discriminator}` ({member.mention})")
