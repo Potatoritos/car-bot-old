@@ -40,7 +40,7 @@ class Guilds(car.Cog):
 
         await channel.send(greeting.format(
             mention=member.mention,
-            username=member.name,
+            username=car.zwsp(member.name.replace('discord.gg/', '<discordgg>'), '@'),
             discriminator=member.discriminator,
             id=member.id
         ))
@@ -58,7 +58,7 @@ class Guilds(car.Cog):
 
         await channel.send(farewell.format(
             mention=member.mention,
-            username=member.name,
+            username=car.zwsp(member.name.replace('discord.gg/', '<discordgg>'), '@'),
             discriminator=member.discriminator,
             id=member.id
         ))
