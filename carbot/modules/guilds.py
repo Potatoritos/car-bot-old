@@ -21,7 +21,7 @@ class Guilds(car.Cog):
             channel = self.bot.guild_settings[member.guild.id].channel_joinleave
             channel = discord.utils.get(member.guild.text_channels, id=channel)
 
-            await channel.send(f"SHUT UP {member.name}#{member.discriminator} ({member.mention})")
+            await channel.send(f"SHUT UP `{member.name}#{member.discriminator}` ({member.mention})")
             return
 
         role = self.bot.guild_settings[member.guild.id].role_unverified
