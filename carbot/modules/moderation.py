@@ -21,11 +21,6 @@ class Moderation(car.Cog):
         self.vc_cnt = {}
         self.vc_dq = deque()
 
-        self.votemute_reqs = {}
-        self.votemute_dq = deque()
-        self.votemutes = set()
-        self.votemuted = set()
-
     @car.listener
     async def on_message(self, msg):
         if msg.guild is None:
@@ -38,7 +33,6 @@ class Moderation(car.Cog):
 
     @car.listener
     async def on_voice_state_update(self, member, bef, aft):
-        return
         if member.guild.id != 495327409487478785:
             return
         if member.bot or bef.channel == aft.channel:
@@ -84,7 +78,6 @@ class Moderation(car.Cog):
     
     @car.listener
     async def on_message_edit(self, bef, aft):
-        return
         if bef.guild.id != 495327409487478785:
             return
         if bef.author.bot or bef.content == aft.content:
@@ -105,7 +98,6 @@ class Moderation(car.Cog):
 
     @car.listener
     async def on_message_delete(self, msg):
-        return
         if msg.guild.id != 495327409487478785:
             return
         if msg.author.bot:
@@ -132,14 +124,6 @@ class Moderation(car.Cog):
                 return
         except AttributeError:
             return
-
-        if reaction.message not in self.votemute_reqs:
-            return
-
-        if user.id in self.votemute_reqs[reaction.message].voters:
-            pass
-
-        self.votemute_reqs[reaction.message].vote(user, side)
 
     @car.command()
     @car.requires_permissions(manage_roles=True)
