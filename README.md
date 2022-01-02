@@ -1,6 +1,6 @@
 # car-bot
 
-My personal discord bot.
+My old discord bot. New version: https://github.com/Potatoritos/car-bot
 
 To run:
 
